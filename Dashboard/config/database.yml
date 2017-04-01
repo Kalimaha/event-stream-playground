@@ -9,12 +9,12 @@ default: &default
 
 development:
   <<: *default
-  database: EdisonCars_development
+  database: Dashboard_development
 
 test:
   <<: *default
-  database: EdisonCars_test
+  database: Dashboard_test
 
 production:
   <<: *default
-  database: EdisonCars_production
+  database: Dashboard_production
