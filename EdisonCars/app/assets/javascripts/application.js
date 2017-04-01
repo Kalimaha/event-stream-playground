@@ -15,3 +15,19 @@
 //= require jquery_ujs
 //= require turbolinks
 //= require_tree .
+
+function buy(model) {
+  $.ajax({
+    method: 'POST',
+    contentType: 'application/json',
+    url: '/orders',
+    data: JSON.stringify({ "model": model }),
+    success: function(data) {
+      $('#info').html('Thank you ' + data.customer_name + '! Your new Edison ' + data.name + ' will be delivered on ' + data.delivery_date + '!')
+      $('#info_container').css('display', 'block');
+    },
+    error: function(e) {
+      console.log(e);
+    }
+  })
+}

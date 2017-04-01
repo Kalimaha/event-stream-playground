@@ -8,25 +8,10 @@ class OrdersController < ApplicationController
   end
 
   def create
-    model = nil
-
-    case params['model'].upcase
-    when 'P'
-      model = OrdersHelper.model_p
-    when 'H'
-      model = OrdersHelper.model_h
-    else
-      model = OrdersHelper.model_f
-    end
-
-    order = Order.new(model)
+    order = CreateOrderService.call(model: params['model'])
 
     respond_to do |format|
-      if order.save
-        format.json { render(json: order ) }
-      else
-        format.json { render json: order.errors, status: :unprocessable_entity }
-      end
+      format.json { render(json: order ) }
     end
   end
 end
