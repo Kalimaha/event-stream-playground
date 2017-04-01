@@ -14,14 +14,16 @@ class EventStreamRepository
       queue.bind(exchange)
 
       begin
-        queue.subscribe(:manual_ack => true, :block => true) do |delivery_info, properties, body|
+        queue.subscribe(:manual_ack => true) do |delivery_info, properties, body|
           json = JSON.parse(body)
           if Order.find_by_external_id(json['external_id']).nil?
-            puts  "\tCreate a new order for #{json['external_id']}"
             order = Order.new(order_data(json))
             order.save
-            puts "\tDelete message #{delivery_info.delivery_tag}"
-            channel.reject(delivery_info.delivery_tag)
+
+            # TODO: to remove or not to remove it?
+            # TODO: Maybe it'd be better not to remove it and have RabbitMQ to
+            # TODO: periodically 'clean' the exchange
+            # channel.reject(delivery_info.delivery_tag)
           end
         end
       rescue Interrupt => _
