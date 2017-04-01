@@ -1,0 +1,24 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  port: 5433
+  host: localhost
+
+development:
+  <<: *default
+  database: EdisonCars_development
+  username: postgres
+  password: Ce09114238
+
+test:
+  <<: *default
+  database: EdisonCars_test
+  username: postgres
+  password: Ce09114238
+
+production:
+  <<: *default
+  database: EdisonCars_production
+  username: postgres
+  password: Ce09114238
