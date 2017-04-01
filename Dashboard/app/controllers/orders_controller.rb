@@ -1,9 +1,9 @@
 class OrdersController < ApplicationController
   def index
-    orders = Order.all
+    @orders = Order.all
 
-    respond_to do |format|
-      format.json { render(json: orders ) }
-    end
+    # respond_to do |format|
+    #   format.json { render(json: orders ) }
+    # end
   end
 end
