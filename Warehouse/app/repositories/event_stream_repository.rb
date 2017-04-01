@@ -46,10 +46,9 @@ class EventStreamRepository
       {
         external_id: json['external_id'],
         name: json['name'],
-        price: json['price'],
+        batteries: json['batteries'],
         order_date: json['order_date'],
         delivery_date: json['delivery_date'],
-        customer_name: json['customer_name'],
       }
     end
 

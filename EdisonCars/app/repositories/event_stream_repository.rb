@@ -14,6 +14,9 @@ class EventStreamRepository
 
       exchange.publish(message, :persistent => true)
 
+      queue       = channel.queue('history', :auto_delete => false)
+      queue.bind(exchange)
+
       connection.close
     end
 
