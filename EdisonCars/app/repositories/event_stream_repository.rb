@@ -9,10 +9,10 @@ class EventStreamRepository
     def publish(order:)
       connection  = open_connection
       channel     = connection.create_channel
-      exchange    = channel.fanout('orders')
+      exchange    = channel.fanout('orders', :durable => true)
       message     = create_message(order)
 
-      exchange.publish(message)
+      exchange.publish(message, :persistent => true)
 
       connection.close
     end
