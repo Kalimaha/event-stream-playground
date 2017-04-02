@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+def print_help
+  help = <<-HELP
+  Available commands:
+
+  build...................Build the Docker image
+  start...................Run RabbitMQ on http://localhost:15672/
+  stop....................Stop RabbitMQ
+  status..................Verify the status of RabbitMQ server
+  add_user <USR> <PWD>....Add a new <USR> with <PWD> to the RabbitMQ management console
+  HELP
+
+  puts help
+end
+
+if ARGV.empty?
+  print_help
+else
+  BASE_CMD = './RabbitMQ/bin/rabbit'
+
+  case ARGV[0]
+  when 'build'
+    exec("cd RabbitMQ && ./bin/rabbit build")
+  when 'start'
+    exec("#{BASE_CMD} start")
+  when 'status'
+    exec("#{BASE_CMD} status")
+  when 'stop'
+    exec("#{BASE_CMD} stop")
+  when 'add_user'
+    exec("#{BASE_CMD} add_user #{ARGV[1]} #{ARGV[2]}")
+  else
+    print_help
+  end
+end

@@ -1,0 +1,46 @@
+#!/usr/bin/env ruby
+def print_help
+  help = <<-HELP
+  Available commands:
+
+  start.................Starts the dashboard app
+  initdb................Initialize the DB
+  resetdb!..............Reset the DB (all existing data will be erased!)
+  sync..................Synchronize DB with RabbitMQ history
+  HELP
+
+  puts help
+end
+
+def start
+  exec('docker-compose up')
+end
+
+def initdb
+  exec('docker-compose run web rake db:create db:migrate')
+end
+
+def resetdb!
+  exec('docker-compose run web rake db:drop db:create db:migrate')
+end
+
+def sync
+  exec('docker-compose run web rake event_stream:sync_history')
+end
+
+if ARGV.empty?
+  print_help
+else
+  case ARGV[0]
+  when 'start'
+    start
+  when 'initdb'
+    initdb
+  when 'resetdb!'
+    resetdb!
+  when 'sync'
+    sync
+  else
+    print_help
+  end
+end

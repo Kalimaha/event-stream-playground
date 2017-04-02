@@ -1,0 +1,17 @@
+version: '2'
+services:
+  db:
+    image: postgres
+  web:
+    build: .
+    command: bundle exec rails s -p 4000 -b '0.0.0.0'
+    volumes:
+      - .:/Warehouse
+    ports:
+      - '4000:4000'
+    depends_on:
+      - db
+    environment:
+      - RABBITMQ_IP
+      - RABBITMQ_USR
+      - RABBITMQ_PWD

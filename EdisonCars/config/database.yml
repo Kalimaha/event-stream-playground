@@ -1,0 +1,19 @@
+default: &default
+  adapter:    postgresql
+  encoding:   unicode
+  pool:       5
+  host:       db
+  username:   postgres
+  password:
+
+development:
+  <<: *default
+  database: EdisonCars_development
+
+test:
+  <<: *default
+  database: EdisonCars_test
+
+production:
+  <<: *default
+  database: EdisonCars_production

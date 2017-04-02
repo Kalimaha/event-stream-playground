@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+def print_help
+  help = <<-HELP
+  Available commands:
+
+  start <APP>.................Starts the <APP>
+  initdb <APP>................Initialize <APP>'s DB
+  resetdb! <APP>..............Reset <APP>'s DB (all existing data will be erased!)
+  sync........................Synchronize DB with RabbitMQ history
+  HELP
+
+  puts help
+end
+
+def print_available_apps
+  help = <<-HELP
+  Available apps:
+
+  dashboard...................Dashboard
+  sales.......................EdisonCars
+  warehouse...................Warehouse
+  HELP
+
+  puts help
+end
+
+AVAILABLE_APPS = {
+  :dashboard  => 'Dashboard',
+  :sales      => 'EdisonCars',
+  :warehouse  => 'Warehouse'
+}
+
+if ARGV.empty?
+  print_help
+else
+  if ARGV[1].nil? || !AVAILABLE_APPS.keys.include?(ARGV[1].to_sym)
+    print_available_apps
+  else
+    exec("(cd #{AVAILABLE_APPS[ARGV[1].downcase.to_sym]}; ./bin/simon_says #{ARGV[0]})")
+  end
+end

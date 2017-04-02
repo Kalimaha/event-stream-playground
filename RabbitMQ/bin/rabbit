@@ -1,0 +1,47 @@
+#!/usr/bin/env ruby
+def print_help
+  help = <<-HELP
+  Available commands:
+
+  build...................Build the Docker image
+  start...................Run RabbitMQ on http://localhost:15672/
+  stop....................Stop RabbitMQ
+  status..................Verify the status of RabbitMQ server
+  add_user <USR> <PWD>....Add a new <USR> with <PWD> to the RabbitMQ management console
+  HELP
+
+  puts help
+end
+
+if ARGV.empty?
+  print_help
+else
+  case ARGV[0]
+  when 'build'
+    exec('docker build -t kalimarabbit .')
+  when 'start'
+    result = system('docker run -d --hostname kalimarabbit --name kalimarabbit -p 5672:5672 -p 15672:15672 kalimarabbit')
+
+    system('docker restart kalimarabbit') unless result
+
+    puts "\nManagement console available at http://localhost:15672/"
+  when 'status'
+    exec('docker exec kalimarabbit rabbitmqctl status')
+  when 'stop'
+    exec('docker stop kalimarabbit')
+  when 'add_user'
+    if ARGV[1].nil? || ARGV[2].nil?
+      print_help
+    else
+      cmd = <<-CMD
+        docker exec kalimarabbit rabbitmqctl add_user #{ARGV[1]} #{ARGV[2]} &&
+        docker exec kalimarabbit rabbitmqctl set_user_tags #{ARGV[1]} administrator &&
+        docker exec kalimarabbit rabbitmqctl set_permissions -p / #{ARGV[1]} ".*" ".*" ".*"
+      CMD
+
+      exec(cmd)
+    end
+  else
+    print_help
+  end
+end
