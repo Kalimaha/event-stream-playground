@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+def print_help
+  help = <<-HELP
+  Available commands:
+
+  build                 Build the Docker image
+  HELP
+
+  puts help
+end
+
+def start
+
+end
+
+def initdb
+
+end
+
+def resetdb!
+
+end
