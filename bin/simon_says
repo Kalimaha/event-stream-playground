@@ -6,6 +6,7 @@ def print_help
   start <APP>.................Starts the <APP>
   initdb <APP>................Initialize <APP>'s DB
   resetdb! <APP>..............Reset <APP>'s DB (all existing data will be erased!)
+  sync........................Synchronize DB with RabbitMQ history
   HELP
 
   puts help
@@ -26,7 +27,7 @@ end
 AVAILABLE_APPS = {
   :dashboard  => 'Dashboard',
   :sales      => 'EdisonCars',
-  :Warehouse  => 'Warehouse'
+  :warehouse  => 'Warehouse'
 }
 
 if ARGV.empty?
