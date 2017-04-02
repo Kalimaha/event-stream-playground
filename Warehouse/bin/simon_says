@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+def print_help
+  help = <<-HELP
+  Available commands:
+
+  start.................Starts the warehouse app
+  initdb................Initialize the DB
+  resetdb!..............Reset the DB (all existing data will be erased!)
+  HELP
+
+  puts help
+end
+
+def start
+  exec('docker-compose up')
+end
+
+def initdb
+  exec('docker-compose run web rake db:create db:migrate')
+end
+
+def resetdb!
+  exec('docker-compose run web rake db:drop db:create db:migrate')
+end
+
+if ARGV.empty?
+  print_help
+else
+  case ARGV[0]
+  when 'start'
+    start
+  when 'initdb'
+    initdb
+  when 'resetdb!'
+    resetdb!
+  else
+    print_help
+  end
+end

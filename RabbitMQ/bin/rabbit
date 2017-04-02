@@ -3,11 +3,11 @@ def print_help
   help = <<-HELP
   Available commands:
 
-  build                 Build the Docker image
-  start                 Run RabbitMQ on http://localhost:15672/
-  stop                  Stop RabbitMQ
-  status                Verify the status of RabbitMQ server
-  add_user <USR> <PWD>  Add a new <USR> with <PWD> to the RabbitMQ management console
+  build...................Build the Docker image
+  start...................Run RabbitMQ on http://localhost:15672/
+  stop....................Stop RabbitMQ
+  status..................Verify the status of RabbitMQ server
+  add_user <USR> <PWD>....Add a new <USR> with <PWD> to the RabbitMQ management console
   HELP
 
   puts help

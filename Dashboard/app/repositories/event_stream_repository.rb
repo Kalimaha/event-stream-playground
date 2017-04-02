@@ -1,8 +1,8 @@
 class EventStreamRepository
   class << self
-    RABBITMQ_IP   = '192.168.1.245'
-    RABBITMQ_USR  = 'kalimarabbit'
-    RABBITMQ_PWD  = '123456'
+    RABBITMQ_IP   = ENV['RABBITMQ_IP']
+    RABBITMQ_USR  = ENV['RABBITMQ_USR']
+    RABBITMQ_PWD  = ENV['RABBITMQ_PWD']
 
     def listen
       consume('dashboard', false)
@@ -29,11 +29,6 @@ class EventStreamRepository
           if Order.find_by_external_id(json['external_id']).nil?
             order = Order.new(order_data(json))
             order.save
-
-            # TODO: to remove or not to remove it?
-            # TODO: Maybe it'd be better not to remove it and have RabbitMQ to
-            # TODO: periodically 'clean' the exchange
-            # channel.reject(delivery_info.delivery_tag)
           end
         end
       rescue Interrupt => _

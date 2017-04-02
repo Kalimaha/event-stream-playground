@@ -1,10 +1,8 @@
-require 'bunny'
-
 class EventStreamRepository
   class << self
-    RABBITMQ_IP   = '192.168.1.245'
-    RABBITMQ_USR  = 'kalimarabbit'
-    RABBITMQ_PWD  = '123456'
+    RABBITMQ_IP   = ENV['RABBITMQ_IP']
+    RABBITMQ_USR  = ENV['RABBITMQ_USR']
+    RABBITMQ_PWD  = ENV['RABBITMQ_PWD']
 
     def publish(order:)
       connection  = open_connection
