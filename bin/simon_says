@@ -3,20 +3,38 @@ def print_help
   help = <<-HELP
   Available commands:
 
-  build                 Build the Docker image
+  start <APP>.................Starts the <APP>
+  initdb <APP>................Initialize <APP>'s DB
+  resetdb! <APP>..............Reset <APP>'s DB (all existing data will be erased!)
   HELP
 
   puts help
 end
 
-def start
+def print_available_apps
+  help = <<-HELP
+  Available apps:
 
+  dashboard...................Dashboard
+  sales.......................EdisonCars
+  warehouse...................Warehouse
+  HELP
+
+  puts help
 end
 
-def initdb
+AVAILABLE_APPS = {
+  :dashboard  => 'Dashboard',
+  :sales      => 'EdisonCars',
+  :Warehouse  => 'Warehouse'
+}
 
-end
-
-def resetdb!
-
+if ARGV.empty?
+  print_help
+else
+  if ARGV[1].nil? || !AVAILABLE_APPS.keys.include?(ARGV[1].to_sym)
+    print_available_apps
+  else
+    exec("(cd #{AVAILABLE_APPS[ARGV[1].downcase.to_sym]}; ./bin/simon_says #{ARGV[0]})")
+  end
 end
