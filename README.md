@@ -1,6 +1,12 @@
 # Event Stream Playground
 
-I started working on this small spare-time project after attending [Fred George](https://twitter.com/fgeorge52?lang=en)'s talk: "_IoT and MicroServices in the Home_". The talk is available on [YouTube](https://youtu.be/J1eTutzcGFQ) and I highly recommend it!
+I started working on this small spare-time project after attending [Fred George](https://twitter.com/fgeorge52?lang=en)'s talk: "_IoT and MicroServices in the Home_". The talk is available on [YouTube](https://youtu.be/J1eTutzcGFQ) and it's strongly recommended!
+Another similar talk is [Perryn Fowler](https://twitter.com/perrynfowler)'s
+"_Microservices and IoT: A Perfect Match_", also available on [YouTube](https://youtu.be/Am7edhP6G7s).
+
+These talks are related to real-time systems, but the use case I want to address
+is a bit different. For the usage of this project please refer to the
+[USAGE.md](USAGE.md) file.
 
 ## Use Case
 
@@ -68,8 +74,17 @@ def consume(queue_name, block)
   end
 end
 ```
+In this little example, downstream systems "listen" to their queue (_connected
+to the exchange_), to fetch the sales data. For each new sale, they check whether
+they already have it in the DB, and they store it (_or part of it_) otherwise.
+
+This type of check is required to avoid duplicate data in the downstream DBs,
+because in the current configuration I don't delete the messages from the queues
+once they've been consumed (_although this setup was required before the
+  introduction of the `history` queue and can be modified_).
 
 ## RabbitMQ Disadvantages
 
-* __Order matters:__ if you publish a message to the exchange with no existing queue, the message is discarded, lost. The solution that I've implemented so far is to create a queue in the datasource, named `history`. Basically, the data source produces the data, it publishes it to the exchange, but it also "consumes" it in a backup queue.
+* __If a tree falls in a forest and no one is around to hear it, does it make
+a sound?:__ Not for RabbitMQ. If the source publishes a message to the exchange with no existing queue, the message is discarded, lost. The solution that I've implemented so far is to create a queue in the datasource, named `history`. Basically, the data source produces the data, it publishes it to the exchange, but it also "consumes" it in a backup queue.
 * __Adding Consumers:__ when a new consumer subscribes to the exchange, it reads the data from that moment on. To solve this problem, I added a small `rake` task, that subscribe to the aforementioned `history` queue, and populates the DB. This is the same as having a feed, even though we are still dealing with the event stream with no overhead for the datasource.
