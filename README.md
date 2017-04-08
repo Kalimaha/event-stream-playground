@@ -2,89 +2,65 @@
 
 I started working on this small spare-time project after attending [Fred George](https://twitter.com/fgeorge52?lang=en)'s talk: "_IoT and MicroServices in the Home_". The talk is available on [YouTube](https://youtu.be/J1eTutzcGFQ) and it's strongly recommended!
 Another similar talk is [Perryn Fowler](https://twitter.com/perrynfowler)'s
-"_Microservices and IoT: A Perfect Match_", also available on [YouTube](https://youtu.be/Am7edhP6G7s).
+"_Microservices and IoT: A Perfect Match_", also available on [YouTube](https://youtu.be/Am7edhP6G7s). More details are available in the blog post I wrote about it, [here](http://guido-barbaglia.blog/posts/microservices_coreography_with_event_streams.html).
 
-These talks are related to real-time systems, but the use case I want to address
-is a bit different. For the usage of this project please refer to the
-[USAGE.md](USAGE.md) file.
+# Usage
 
-## Use Case
+This repository is composed by a RabbitMQ server (_the event stream_), and three
+Rails 5 apps, mimicking a _Sales_ UI, the _Warehouse_ app and a _Dashboard_. All
+these components can be managed throught the scripts stored in `/bin`.
 
-Someone decided to compete with Tesla in the electric cars market with a low cost alternative named "Edison Cars". This young company needs an e-commerce web-site to sell its products, and it wants to streamline the whole operation by starting the production of a new car as soon as an order is placed. Basically, they need to share data between sales and the other divisions of the company. There are several ways to achieve such goal.
+## RabbitMQ
+This folder contains the Dockerfile and the commands required to build and
+manage a container with a RabbitMQ server instance.
 
-### Monolith
-
-Well. No. 😬
-
-### Synchronous RESTful Services
-
-We can implement several micro services, one for each division. As soon as a customer buys a new car, we create a new record in the consumer-facing app, and we then send such data to every other downstream system. This will put too much responsibility in the sales web-app, that needs to know which are the services required to build and ship a car, and how to contact them.
-
-### Queue
-
-Another solution consists in the usage of a queue, such as [SQS](https://aws.amazon.com/sqs/), [Que](https://github.com/chanks/que) or similar. With this implementation, the sole responsibility of the sales app is to (_sell a car and_) enqueue the data about the sale. Such information is then retrieved and processed by a worker. Usually a queue works for a single worker, which removes the job from the queue, and therefore this is not a good solution if we want to share the same information between several services
-
-### Data Feed
-
-The sales app can also produce a data feed, exposing an endpoint which provides all the sales in JSON/XML format to whoever needs it. Downstream systems can consume such feed on a regular basis and store the data in a local DB. With this solution, the sales app is only responsible for selling cars, we can share the same information among several systems, and we also increase the resilience of the overall architecture. Each consumer has a local copy of the data, and hypothetical downtimes of the sales app won't affect the production of the cars.
-
-This solution works well when data is not updated often and the local copy is good enough to continue operations. On the other hand, we are stressing the sales app which is accessed often to provide fresh data. This can potentially slow down the app when there are many downstream system and/or the feed is particularly heavy.
-
-### Event Stream
-
-With an event stream, the sales app is required to pubilsh the sale event and the relative data to a message broker. Downstream systems subscribe to the event stream and get notified every time there is a new event. The advantages are the same of the Data Feed solution, but we have added an extra layer between the data source and its consumers. The message broker is an external system, therefore the sales app is not queried constantly. Consumer systems read directly from the stream and store the data locally, achievieng the same decoupling and resiliency goals.
-
-## RabbitMQ Overview
-
-I've tried RabbitMQ, as suggested in the talk, with the [Bunny](http://rubybunny.info/) Ruby client. For each new sale, a new record is stored in the DB and the event published on the [exchange](https://www.rabbitmq.com/tutorials/tutorial-three-ruby.html). Basically, an exchange is an object that receives messages and pushes them to queues:
-
-```ruby
-def publish(order:)
-  connection  = open_connection
-  channel     = connection.create_channel
-  exchange    = channel.fanout('orders', :durable => true)
-  message     = create_message(order)
-
-  exchange.publish(message, :persistent => true)
-
-  connection.close
-end
+### Build the Container
+Docker container is based on Ubuntu 16.04. To build the container run:
 ```
-The data source needs to open a connection, create a channel, an exchange and then publish the message. The code on the consumer side is very similar:
-
-```ruby
-def consume(queue_name, block)
-  connection  = open_connection
-  channel     = connection.create_channel
-  exchange    = channel.fanout('orders', :durable => true)
-  queue       = channel.queue(queue_name, :auto_delete => false)
-  queue.bind(exchange)
-
-  begin
-    queue.subscribe(:block => block, :manual_ack => true) do |delivery_info, properties, body|
-      json = JSON.parse(body)
-      if Order.find_by_external_id(json['external_id']).nil?
-        order = Order.new(order_data(json))
-        order.save
-      end
-    end
-  rescue Interrupt => _
-    channel.close
-    connection.close
-  end
-end
+./bin/rabbit build
 ```
-In this little example, downstream systems "listen" to their queue (_connected
-to the exchange_), to fetch the sales data. For each new sale, they check whether
-they already have it in the DB, and they store it (_or part of it_) otherwise.
 
-This type of check is required to avoid duplicate data in the downstream DBs,
-because in the current configuration I don't delete the messages from the queues
-once they've been consumed (_although this setup was required before the
-  introduction of the `history` queue and can be modified_).
+### Manage the Container
+Once the container has been built, it is possible to run it, stop it, or ask for
+the status, with:
+```
+./bin/rabbit start | stop | status
+```
+The `start` command will try to run the Docker container if this does't exist
+yet, otherwise it will restart the existing one.
 
-## RabbitMQ Disadvantages
+### Create a new Admin
+RabbitMQ has a management web interface, with no default users enabled. To create
+a user, simply run:
+```
+./bin/rabbit add_user my_username my_password
+```
+After that, navigate to http://localhost:15672/ and use the newly created
+credentials to login.
 
-* __If a tree falls in a forest and no one is around to hear it, does it make
-a sound?:__ Not for RabbitMQ. If the source publishes a message to the exchange with no existing queue, the message is discarded, lost. The solution that I've implemented so far is to create a queue in the datasource, named `history`. Basically, the data source produces the data, it publishes it to the exchange, but it also "consumes" it in a backup queue.
-* __Adding Consumers:__ when a new consumer subscribes to the exchange, it reads the data from that moment on. To solve this problem, I added a small `rake` task, that subscribe to the aforementioned `history` queue, and populates the DB. This is the same as having a feed, even though we are still dealing with the event stream with no overhead for the datasource.
+### List of Available Commands
+
+* `build`: Build the Docker image
+* `start`: Run RabbitMQ on http://localhost:15672/
+* `stop`: Stop RabbitMQ
+* `status`: Verify the status of RabbitMQ server
+* `add_user <USR> <PWD>`: Add a new <USR> with <PWD> to the RabbitMQ management console
+
+## Rails Apps
+Each Rails app is Dockerized through Docker Compose, with a `web` and a `db`
+volume. Apps are managed through the `simon_says` script, e.g.
+```
+./simon_says start sales
+```
+will start the main sales app and its DB.
+
+### Available Commands
+* `start` <APP>: Starts the <APP>
+* `initdb` <APP>: Initialize <APP>'s DB
+* `resetdb!` <APP>: Reset <APP>'s DB (all existing data will be erased!)
+* `sync`: Synchronize DB with RabbitMQ history
+
+### Available Apps
+* `dashboard`: Dashboard
+* `sales`: EdisonCars
+* `warehouse`: Warehouse
